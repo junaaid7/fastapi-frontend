@@ -3,7 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import {
+User,
+Mail,
+Lock,
+Building2,
+Eye,
+EyeOff,
+} from "lucide-react";
 import { Toaster, toast } from "sonner";
 import api from "@/lib/api";
 
@@ -13,14 +20,17 @@ const router = useRouter();
 const [name, setName] = useState("");
 const [email, setEmail] = useState("");
 const [password, setPassword] = useState("");
+const [organizationName, setOrganizationName] = useState("");
 
 const [showPassword, setShowPassword] = useState(false);
 const [loading, setLoading] = useState(false);
 
-const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+const handleSubmit = async (
+e: React.FormEvent<HTMLFormElement>
+) => {
 e.preventDefault();
 
-// Frontend validation
+// Name validation
 if (!name.trim()) {
   toast.error("Full name is required");
   return;
@@ -31,6 +41,20 @@ if (name.trim().length < 2) {
   return;
 }
 
+// Organization validation
+if (!organizationName.trim()) {
+  toast.error("Organization name is required");
+  return;
+}
+
+if (organizationName.trim().length < 2) {
+  toast.error(
+    "Organization name must be at least 2 characters"
+  );
+  return;
+}
+
+// Email validation
 if (!email.trim()) {
   toast.error("Email is required");
   return;
@@ -41,6 +65,7 @@ if (!email.includes("@")) {
   return;
 }
 
+// Password validation
 if (!password) {
   toast.error("Password is required");
   return;
@@ -56,9 +81,10 @@ try {
 
   // Send registration request to FastAPI
   await api.post("/auth/register", {
-    name,
-    email,
+    name: name.trim(),
+    email: email.trim(),
     password,
+    organization_name: organizationName.trim(),
   });
 
   toast.success("Account created successfully!");
@@ -77,7 +103,7 @@ try {
 
 };
 
-return ( <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 via-white to-blue-50/50 p-4"> <Toaster position="top-right" /> 
+return ( <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 via-white to-blue-50/50 p-4"> <Toaster position="top-right" />
 
   <div className="w-full max-w-md bg-white rounded-2xl shadow-xl shadow-blue-100/50 border border-slate-200/60 p-8">
 
@@ -105,6 +131,27 @@ return ( <div className="min-h-screen flex items-center justify-center bg-linear
             placeholder="Yamal Khan"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            className="w-full pl-10 pr-3 py-2.5 text-sm rounded-lg border border-slate-200 bg-slate-50/70 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+          />
+        </div>
+      </div>
+
+      {/* Organization */}
+      <div>
+        <label className="text-sm font-medium text-slate-700">
+          Organization Name
+        </label>
+
+        <div className="relative mt-1.5">
+          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+
+          <input
+            type="text"
+            placeholder="Junaid Tech"
+            value={organizationName}
+            onChange={(e) =>
+              setOrganizationName(e.target.value)
+            }
             className="w-full pl-10 pr-3 py-2.5 text-sm rounded-lg border border-slate-200 bg-slate-50/70 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
           />
         </div>
@@ -148,7 +195,9 @@ return ( <div className="min-h-screen flex items-center justify-center bg-linear
 
           <button
             type="button"
-            onClick={() => setShowPassword(!showPassword)}
+            onClick={() =>
+              setShowPassword(!showPassword)
+            }
             className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
           >
             {showPassword ? (
