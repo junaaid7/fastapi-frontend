@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tenant",
+  title: "PMP",
   description: "Multi-Tenant AI-Powered Project Management Platform",
 };
 
