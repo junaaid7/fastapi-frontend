@@ -77,7 +77,7 @@ if (password.length < 6) {
 }
 
 try {
-  setLoading(true);
+  setLoading(true); 
 
   // Send registration request to FastAPI
   await api.post("/auth/register", {
@@ -128,7 +128,7 @@ return ( <div className="min-h-screen flex items-center justify-center bg-linear
 
           <input
             type="text"
-            placeholder="Yamal Khan"
+            placeholder="Junaid Ali Khan"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full pl-10 pr-3 py-2.5 text-sm rounded-lg border border-slate-200 bg-slate-50/70 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
@@ -147,7 +147,7 @@ return ( <div className="min-h-screen flex items-center justify-center bg-linear
 
           <input
             type="text"
-            placeholder="Junaid Tech"
+            placeholder="JAK Brand"
             value={organizationName}
             onChange={(e) =>
               setOrganizationName(e.target.value)
@@ -168,7 +168,7 @@ return ( <div className="min-h-screen flex items-center justify-center bg-linear
 
           <input
             type="email"
-            placeholder="yamal@gmail.com"
+            placeholder="JAK@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full pl-10 pr-3 py-2.5 text-sm rounded-lg border border-slate-200 bg-slate-50/70 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
@@ -187,7 +187,7 @@ return ( <div className="min-h-screen flex items-center justify-center bg-linear
 
           <input
             type={showPassword ? "text" : "password"}
-            placeholder="Min 6 characters"
+            placeholder="Your Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full pl-10 pr-10 py-2.5 text-sm rounded-lg border border-slate-200 bg-slate-50/70 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"

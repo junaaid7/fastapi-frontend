@@ -4,11 +4,9 @@ import { useEffect, useState } from "react";
 import {
 ClipboardList,
 Plus,
+Pencil,
 X,
 Trash2,
-Clock3,
-CheckCircle2,
-Circle,
 FolderKanban,
 } from "lucide-react";
 import { Toaster, toast } from "sonner";
@@ -34,12 +32,20 @@ const [projects, setProjects] = useState<Project[]>([]);
 
 const [loading, setLoading] = useState(true);
 const [creating, setCreating] = useState(false);
+const [updating, setUpdating] = useState(false);
 
 const [showCreateModal, setShowCreateModal] = useState(false);
+const [showEditModal, setShowEditModal] = useState(false);
 
 const [title, setTitle] = useState("");
 const [description, setDescription] = useState("");
 const [projectId, setProjectId] = useState("");
+
+const [editingTask, setEditingTask] = useState<Task | null>(null);
+const [editTitle, setEditTitle] = useState("");
+const [editDescription, setEditDescription] = useState("");
+const [editStatus, setEditStatus] =
+useState<Task["status"]>("todo");
 
 const getProjects = async () => {
 try {
@@ -48,7 +54,7 @@ const response = await api.get("/projects/");
 
   setProjects(response.data);
 
-  if (response.data.length > 0) {
+  if (response.data.length > 0 && !projectId) {
     setProjectId(response.data[0].id);
   }
 } catch (error: any) {
@@ -66,6 +72,7 @@ const response = await api.get("/projects/");
 const getTasks = async () => {
 try {
 setLoading(true);
+
 
   const response = await api.get("/tasks/");
 
@@ -91,6 +98,7 @@ getProjects(),
 getTasks(),
 ]);
 };
+
 
 loadData();
 
@@ -185,6 +193,133 @@ try {
 
 };
 
+const handleStatusChange = async (
+taskId: string,
+status: Task["status"]
+) => {
+try {
+const response = await api.patch(
+`/tasks/${taskId}/status`,
+{
+status,
+}
+);
+
+
+  setTasks((currentTasks) =>
+    currentTasks.map((task) =>
+      task.id === taskId
+        ? response.data
+        : task
+    )
+  );
+
+  toast.success("Task status updated!");
+} catch (error: any) {
+  console.error(
+    "Failed to update task status:",
+    error
+  );
+
+  toast.error(
+    error?.response?.data?.detail ||
+      "Failed to update task status."
+  );
+}
+
+
+};
+
+const handleEditTask = (task: Task) => {
+setEditingTask(task);
+setEditTitle(task.title);
+setEditDescription(task.description || "");
+setEditStatus(task.status);
+
+
+setShowEditModal(true);
+
+
+};
+
+const handleUpdateTask = async (
+e: React.FormEvent<HTMLFormElement>
+) => {
+e.preventDefault();
+
+
+if (!editingTask) {
+  return;
+}
+
+if (!editTitle.trim()) {
+  toast.error("Task title is required");
+  return;
+}
+
+if (editTitle.trim().length < 2) {
+  toast.error(
+    "Task title must be at least 2 characters"
+  );
+  return;
+}
+
+try {
+  setUpdating(true);
+
+  const response = await api.put(
+    `/tasks/${editingTask.id}`,
+    {
+      title: editTitle.trim(),
+      description:
+        editDescription.trim() || null,
+      status: editStatus,
+    }
+  );
+
+  setTasks((currentTasks) =>
+    currentTasks.map((task) =>
+      task.id === editingTask.id
+        ? response.data
+        : task
+    )
+  );
+
+  setEditingTask(null);
+  setEditTitle("");
+  setEditDescription("");
+  setEditStatus("todo");
+  setShowEditModal(false);
+
+  toast.success("Task updated successfully!");
+} catch (error: any) {
+  console.error("Failed to update task:", error);
+
+  toast.error(
+    error?.response?.data?.detail ||
+      "Failed to update task."
+  );
+} finally {
+  setUpdating(false);
+}
+
+
+};
+
+const closeCreateModal = () => {
+setShowCreateModal(false);
+setTitle("");
+setDescription("");
+};
+
+const closeEditModal = () => {
+setShowEditModal(false);
+setEditingTask(null);
+setEditTitle("");
+setEditDescription("");
+setEditStatus("todo");
+};
+
 const getProjectName = (projectId: string) => {
 const project = projects.find(
 (item) => item.id === projectId
@@ -196,25 +331,11 @@ return project?.name || "Unknown Project";
 
 };
 
-const getStatusClasses = (status: Task["status"]) => {
-if (status === "done") {
-return "bg-green-50 text-green-700 border-green-200";
-}
-
-
-if (status === "in_progress") {
-  return "bg-yellow-50 text-yellow-700 border-yellow-200";
-}
-
-return "bg-slate-50 text-slate-600 border-slate-200";
-
-
-};
-
 const getStatusLabel = (status: Task["status"]) => {
 if (status === "in_progress") {
 return "In Progress";
 }
+
 
 if (status === "done") {
   return "Done";
@@ -225,39 +346,24 @@ return "Todo";
 
 };
 
-const getStatusIcon = (status: Task["status"]) => {
-if (status === "done") {
-return <CheckCircle2 className="h-3.5 w-3.5" />;
-}
-
-if (status === "in_progress") {
-  return <Clock3 className="h-3.5 w-3.5" />;
-}
-
-return <Circle className="h-3.5 w-3.5" />;
-
-
-};
-
 return ( <div className="min-h-screen bg-slate-50"> <Toaster position="top-right" />
-
 
   {/* Header */}
   <div className="bg-white border-b border-slate-200">
-    <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
 
       <div className="flex items-center gap-3">
 
-        <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center">
+        <div className="h-10 w-10 shrink-0 rounded-lg bg-blue-50 flex items-center justify-center">
           <ClipboardList className="h-5 w-5 text-blue-600" />
         </div>
 
         <div>
-          <h1 className="text-xl font-bold text-slate-900">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-900">
             Tasks
           </h1>
 
-          <p className="text-sm text-slate-500">
+          <p className="text-xs sm:text-sm text-slate-500">
             Manage tasks across your projects
           </p>
         </div>
@@ -267,7 +373,7 @@ return ( <div className="min-h-screen bg-slate-50"> <Toaster position="top-right
       <button
         onClick={() => setShowCreateModal(true)}
         disabled={projects.length === 0}
-        className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-linear-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-linear-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <Plus className="h-4 w-4" />
         Create Task
@@ -277,9 +383,9 @@ return ( <div className="min-h-screen bg-slate-50"> <Toaster position="top-right
   </div>
 
   {/* Main */}
-  <main className="max-w-7xl mx-auto px-6 py-8">
+  <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
 
-    {/* No projects */}
+    {/* No Projects */}
     {!loading && projects.length === 0 && (
       <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800">
         You need to create a project before creating a task.
@@ -297,7 +403,7 @@ return ( <div className="min-h-screen bg-slate-50"> <Toaster position="top-right
 
     {/* Empty State */}
     {!loading && tasks.length === 0 && (
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-10 text-center">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 sm:p-10 text-center">
 
         <div className="mx-auto h-14 w-14 rounded-xl bg-blue-50 flex items-center justify-center">
           <ClipboardList className="h-7 w-7 text-blue-600" />
@@ -330,56 +436,89 @@ return ( <div className="min-h-screen bg-slate-50"> <Toaster position="top-right
         {tasks.map((task) => (
           <div
             key={task.id}
-            className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 hover:shadow-md transition"
+            className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-5 hover:shadow-md transition"
           >
 
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
 
               {/* Task Info */}
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
 
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
 
-                  <h2 className="text-lg font-semibold text-slate-900">
+                  <h2 className="text-base sm:text-lg font-semibold text-slate-900 break-words">
                     {task.title}
                   </h2>
 
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border rounded-full ${getStatusClasses(
-                      task.status
-                    )}`}
+                  {/* Status */}
+                  <select
+                    value={task.status}
+                    onChange={(e) =>
+                      handleStatusChange(
+                        task.id,
+                        e.target.value as Task["status"]
+                      )
+                    }
+                    className="w-fit px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                   >
-                    {getStatusIcon(task.status)}
-                    {getStatusLabel(task.status)}
-                  </span>
+                    <option value="todo">
+                      Todo
+                    </option>
+
+                    <option value="in_progress">
+                      In Progress
+                    </option>
+
+                    <option value="done">
+                      Done
+                    </option>
+                  </select>
 
                 </div>
 
+                {/* Project */}
                 <div className="flex items-center gap-2 mt-2 text-sm text-slate-500">
-                  <FolderKanban className="h-4 w-4" />
+                  <FolderKanban className="h-4 w-4 shrink-0" />
 
-                  <span>
+                  <span className="truncate">
                     {getProjectName(task.project_id)}
                   </span>
                 </div>
 
-                <p className="mt-3 text-sm text-slate-600 leading-6">
+                {/* Description */}
+                <p className="mt-3 text-sm text-slate-600 leading-6 break-words">
                   {task.description ||
                     "No description provided."}
                 </p>
 
               </div>
 
-              {/* Delete */}
-              <button
-                onClick={() =>
-                  handleDeleteTask(task.id)
-                }
-                className="shrink-0 p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                title="Delete task"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              {/* Actions */}
+              <div className="flex items-center gap-2 self-end lg:self-start">
+
+                {/* Edit */}
+                <button
+                  onClick={() =>
+                    handleEditTask(task)
+                  }
+                  className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                  title="Edit task"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+
+                {/* Delete */}
+                <button
+                  onClick={() =>
+                    handleDeleteTask(task.id)
+                  }
+                  className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                  title="Delete task"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+
+              </div>
 
             </div>
 
@@ -395,10 +534,10 @@ return ( <div className="min-h-screen bg-slate-50"> <Toaster position="top-right
   {showCreateModal && (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
 
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
 
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200">
+        <div className="flex items-start justify-between gap-4 p-5 sm:p-6 border-b border-slate-200">
 
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
@@ -411,8 +550,8 @@ return ( <div className="min-h-screen bg-slate-50"> <Toaster position="top-right
           </div>
 
           <button
-            onClick={() => setShowCreateModal(false)}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+            onClick={closeCreateModal}
+            className="shrink-0 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
           >
             <X className="h-5 w-5" />
           </button>
@@ -422,7 +561,7 @@ return ( <div className="min-h-screen bg-slate-50"> <Toaster position="top-right
         {/* Form */}
         <form
           onSubmit={handleCreateTask}
-          className="p-6 space-y-5"
+          className="p-5 sm:p-6 space-y-5"
         >
 
           {/* Project */}
@@ -488,16 +627,12 @@ return ( <div className="min-h-screen bg-slate-50"> <Toaster position="top-right
           </div>
 
           {/* Buttons */}
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
 
             <button
               type="button"
-              onClick={() => {
-                setShowCreateModal(false);
-                setTitle("");
-                setDescription("");
-              }}
-              className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition"
+              onClick={closeCreateModal}
+              className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition"
             >
               Cancel
             </button>
@@ -505,7 +640,7 @@ return ( <div className="min-h-screen bg-slate-50"> <Toaster position="top-right
             <button
               type="submit"
               disabled={creating}
-              className="px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {creating ? "Creating..." : "Create Task"}
             </button>
@@ -519,6 +654,132 @@ return ( <div className="min-h-screen bg-slate-50"> <Toaster position="top-right
     </div>
   )}
 
+  {/* Edit Task Modal */}
+  {showEditModal && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 p-5 sm:p-6 border-b border-slate-200">
+
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Edit Task
+            </h2>
+
+            <p className="text-sm text-slate-500 mt-1">
+              Update task information.
+            </p>
+          </div>
+
+          <button
+            onClick={closeEditModal}
+            className="shrink-0 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+          >
+            <X className="h-5 w-5" />
+          </button>
+
+        </div>
+
+        {/* Form */}
+        <form
+          onSubmit={handleUpdateTask}
+          className="p-5 sm:p-6 space-y-5"
+        >
+
+          {/* Title */}
+          <div>
+            <label className="text-sm font-medium text-slate-700">
+              Task Title
+            </label>
+
+            <input
+              type="text"
+              value={editTitle}
+              onChange={(e) =>
+                setEditTitle(e.target.value)
+              }
+              className="w-full mt-1.5 px-3 py-2.5 text-sm rounded-lg border border-slate-200 bg-slate-50/70 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="text-sm font-medium text-slate-700">
+              Description
+            </label>
+
+            <textarea
+              rows={4}
+              value={editDescription}
+              onChange={(e) =>
+                setEditDescription(e.target.value)
+              }
+              className="w-full mt-1.5 px-3 py-2.5 text-sm rounded-lg border border-slate-200 bg-slate-50/70 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all resize-none"
+            />
+          </div>
+
+          {/* Status */}
+          <div>
+            <label className="text-sm font-medium text-slate-700">
+              Status
+            </label>
+
+            <select
+              value={editStatus}
+              onChange={(e) =>
+                setEditStatus(
+                  e.target.value as Task["status"]
+                )
+              }
+              className="w-full mt-1.5 px-3 py-2.5 text-sm rounded-lg border border-slate-200 bg-slate-50/70 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+            >
+              <option value="todo">
+                Todo
+              </option>
+
+              <option value="in_progress">
+                In Progress
+              </option>
+
+              <option value="done">
+                Done
+              </option>
+            </select>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+
+            <button
+              type="button"
+              onClick={closeEditModal}
+              className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              disabled={updating}
+              className="w-full sm:w-auto px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {updating
+                ? "Saving..."
+                : "Save Changes"}
+            </button>
+
+          </div>
+
+        </form>
+
+      </div>
+
+    </div>
+  )}
 </div>
+
+
 );
 }

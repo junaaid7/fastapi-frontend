@@ -95,7 +95,7 @@ return ( <div className="min-h-screen flex items-center justify-center bg-linear
 
           <input
             type="email"
-            placeholder="yamal@gmail.com"
+            placeholder="junaid@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full pl-10 pr-3 py-2.5 text-sm rounded-lg border border-slate-200 bg-slate-50/70 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none"
@@ -132,7 +132,7 @@ return ( <div className="min-h-screen flex items-center justify-center bg-linear
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            className="absolute right-3 top-1/2 cursor-pointer -translate-y-1/2 text-slate-400 hover:text-slate-600"
           >
             {showPassword ? (
               <EyeOff className="h-5 w-5" />
@@ -147,7 +147,7 @@ return ( <div className="min-h-screen flex items-center justify-center bg-linear
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-3 text-sm font-semibold text-white bg-linear-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:ring-4 focus:ring-blue-200 transition-all shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
+        className="w-full py-3 cursor-pointer text-sm font-semibold text-white bg-linear-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:ring-4 focus:ring-blue-200 transition-all shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
       >
         {loading ? "Signing in..." : "Login"}
       </button>
