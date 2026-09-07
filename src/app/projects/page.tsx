@@ -5,6 +5,11 @@ import Link from "next/link";
 import { FolderKanban, Plus, X, Trash2, FileText } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import api from "@/lib/api";
+import {
+  canCreateProject,
+  canEditProject,
+  canDeleteProject,
+} from "@/lib/permissions";
 
 type Project = {
   id: string;
@@ -16,6 +21,7 @@ type Project = {
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState("");
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -46,8 +52,19 @@ export default function ProjectsPage() {
     }
   };
 
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await api.get("/auth/me");
+
+      setUserRole(response.data.role);
+    } catch (error) {
+      console.error("Failed to fetch current user:", error);
+    }
+  };
+
   useEffect(() => {
     fetchProjects();
+    fetchCurrentUser();
   }, []);
 
   const handleCreateProject = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -131,14 +148,15 @@ export default function ProjectsPage() {
               </p>
             </div>
           </div>
-
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-linear-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md cursor-pointer"
-          >
-            <Plus className="h-4 w-4 hidden sm:block" />
-            Create Project
-          </button>
+          {canCreateProject(userRole) && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-linear-to-r from-blue-600 to-blue-700 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md cursor-pointer"
+            >
+              <Plus className="h-4 w-4 hidden sm:block" />
+              Create Project
+            </button>
+          )}
         </div>
       </div>
       {/* Main */}
@@ -165,13 +183,15 @@ export default function ProjectsPage() {
               Create your first project to get started.
             </p>
 
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition cursor-pointer"
-            >
-              <Plus className="h-4 w-4" />
-              Create Project
-            </button>
+            {canCreateProject(userRole) && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition cursor-pointer"
+              >
+                <Plus className="h-4 w-4" />
+                Create Project
+              </button>
+            )}
           </div>
         )}
 
@@ -189,6 +209,7 @@ export default function ProjectsPage() {
                     <FolderKanban className="h-5 w-5 text-blue-600" />
                   </div>
 
+{canDeleteProject(userRole) && (
                   <button
                     onClick={() => handleDeleteProject(project.id)}
                     className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer"
@@ -196,6 +217,7 @@ export default function ProjectsPage() {
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
+)}
                 </div>
 
                 {/* Project Info */}

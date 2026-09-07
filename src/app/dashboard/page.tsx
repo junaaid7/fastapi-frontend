@@ -4,13 +4,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Building2, CheckCircle2, LogOut, Mail, User } from "lucide-react";
 import { Toaster, toast } from "sonner";
-import api from "@/lib/api";
+import api from "@/lib/api"; 
+import {formatRole} from "@/lib/permissions";
 
 type UserData = {
   id: string;
   name: string;
   email: string;
   organization_id: string;
+  role: string;
 };
 
 export default function DashboardPage() {
@@ -23,6 +25,7 @@ export default function DashboardPage() {
     const getCurrentUser = async () => {
       try {
         const response = await api.get("/auth/me");
+        console.log(response.data.role);
 
         setUser(response.data);
 
@@ -98,11 +101,15 @@ export default function DashboardPage() {
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
           <div>
             <h2 className="text-2xl font-bold text-slate-900">
-              Welcome back, {user.name}
+              Welcome {user.name}
             </h2>
 
             <p className="text-sm text-slate-500 mt-1">
-              Here is your workspace information.
+              {user?.role && (
+  <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700">
+    {formatRole(user.role)}
+  </span>
+)}
             </p>
           </div>
         </div>
