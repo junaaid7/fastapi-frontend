@@ -25,3 +25,7 @@ export const canDeleteTask = (role: string) => {
 export const formatRole = (role: string) => {
   return role.charAt(0).toUpperCase() + role.slice(1);
 };
+
+export const canManageMembers = (role: string) => {
+  return ["owner", "admin"].includes(role);
+};

@@ -67,6 +67,7 @@ export default function ProjectsPage() {
     fetchCurrentUser();
   }, []);
 
+
   const handleCreateProject = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 

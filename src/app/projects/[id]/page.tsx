@@ -126,6 +126,9 @@ export default function ProjectDetailsPage() {
     fetchCurrentUser();
   }, [projectId]);
 
+
+
+
   const handleDeleteProject = async () => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this project?",
